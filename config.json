@@ -1,7 +1,7 @@
 {
-    "token": "_",
-	"guildId": "_",
-	"mobyGamesApiKey": "_",
+    "token": "",
+	"guildId": "",
+    "theGamesDbApiKey": "",
     "prefix": "!",
-    "ownerID": "_"
+    "ownerID": ""
 }
