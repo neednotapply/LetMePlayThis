@@ -20,6 +20,7 @@ ROMSPURE_PLATFORM_MAP = {
     "Sega Genesis": "sega-genesis",
     "Sega Saturn": "sega-saturn",
     "Super Nintendo (SNES)": "super-nintendo-entertainment-system",
+    "Super Nintendo Entertainment System": "super-nintendo-entertainment-system",
     "SNK Neo Geo AES": "snk-neo-geo-aes",
     "Sony PlayStation": "sony-playstation",
     "Sony Playstation 3": "sony-playstation-3",
