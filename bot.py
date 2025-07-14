@@ -9,6 +9,7 @@ from bs4 import BeautifulSoup
 # Import your scraper functions:
 from scrapers.gog_games import get_gog_download_links
 from scrapers.romspure import get_romspure_download_links
+from scrapers.myrient import get_myrient_download_links
 
 script_dir = os.path.dirname(os.path.abspath(__file__))
 config_path = os.path.join(script_dir, "config.json")
@@ -179,16 +180,20 @@ async def fetch_images(game_id: int) -> str:
 async def get_all_download_links(game_title: str, platform_name: str) -> list[tuple[str, str]]:
     links = []
 
-    # For PC games, only query GOG-Games.
-    if platform_name.lower() == "pc":
+    # For PC games (including DOS), only query GOG-Games.
+    if platform_name.lower() in {"pc", "dos"}:
         gog_links = await get_gog_download_links(game_title)
         for url in gog_links:
             links.append(("GOG-Games", url))
     else:
-        # For non-PC, query Romspure.
+        # For non-PC platforms query both Romspure and Myrient.
         roms_links = await get_romspure_download_links(game_title, platform_name)
         for url in roms_links:
             links.append(("RomsPure", url))
+
+        myrient_links = await get_myrient_download_links(game_title, platform_name)
+        for url in myrient_links:
+            links.append(("Myrient", url))
 
     return links
 
