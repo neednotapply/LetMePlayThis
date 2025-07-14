@@ -17,15 +17,17 @@ _index_cache: list[str] | None = None
 def update_index() -> None:
     """Regenerate the local index file by crawling the Myrient directory."""
 
-    def crawl() -> list[str]:
+    def crawl(out_file) -> list[str]:
         """Recursively collect all file paths from the open directory."""
         results: list[str] = []
         stack = [""]
         session = requests.Session()
+        count = 0
 
         while stack:
             rel = stack.pop()
             url = urllib.parse.urljoin(f"{BASE_URL}/", rel)
+            print(f"[myrient] Fetching {url}")
             resp = session.get(url)
             resp.raise_for_status()
             soup = BeautifulSoup(resp.text, "html.parser")
@@ -38,18 +40,24 @@ def update_index() -> None:
                 if href.endswith("/"):
                     stack.append(rel + decoded)
                 else:
-                    results.append(rel + decoded)
+                    path = rel + decoded
+                    results.append(path)
+                    out_file.write(path + "\n")
+                    count += 1
+                    if count % 100 == 0:
+                        out_file.flush()
+                        print(f"[myrient] {count} files indexed so far...")
 
+        out_file.flush()
         return results
 
     global _index_cache
     os.makedirs(os.path.dirname(INDEX_PATH), exist_ok=True)
     print("[myrient] Updating local index via HTTP crawl. This may take a while...")
-    entries = crawl()
     with open(INDEX_PATH, "w", encoding="utf-8") as f:
-        for line in entries:
-            f.write(line + "\n")
+        entries = crawl(f)
     _index_cache = None
+    print(f"[myrient] Index updated with {len(entries)} entries.")
 
 MYRIENT_PLATFORM_MAP = {
     "Nintendo Game Boy": "No-Intro/Nintendo - Game Boy",
