@@ -5,7 +5,8 @@ import urllib.parse
 from bs4 import BeautifulSoup
 
 # We do fuzzy matching for the game name within the search results
-from rapidfuzz import fuzz
+# Attempt to use rapidfuzz for fast fuzzy matching but fall back to difflib
+from scrapers.fuzz_fallback import fuzz
 
 # Import the dictionary-based function from platform_map
 from scrapers.platform_map import get_romspure_subpath_exact
