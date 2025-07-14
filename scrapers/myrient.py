@@ -4,7 +4,8 @@ import urllib.parse
 
 import requests
 from bs4 import BeautifulSoup
-from rapidfuzz import fuzz
+# Attempt to use rapidfuzz for fast fuzzy matching but fall back to difflib
+from scrapers.fuzz_fallback import fuzz
 
 BASE_URL = "https://myrient.erista.me/files"
 

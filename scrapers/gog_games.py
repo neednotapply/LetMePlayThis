@@ -1,6 +1,7 @@
 import urllib.parse
 from bs4 import BeautifulSoup
-from rapidfuzz import fuzz
+# Attempt to use rapidfuzz for fast fuzzy matching but fall back to difflib
+from scrapers.fuzz_fallback import fuzz
 from playwright.async_api import async_playwright
 
 BASE_URL = "https://gog-games.to"
