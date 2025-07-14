@@ -1,8 +1,9 @@
 # scrapers/myrient.py
 import os
-import subprocess
 import urllib.parse
 
+import requests
+from bs4 import BeautifulSoup
 from rapidfuzz import fuzz
 
 BASE_URL = "https://myrient.erista.me/files"
@@ -14,20 +15,40 @@ _index_cache: list[str] | None = None
 
 
 def update_index() -> None:
-    """Uses rclone to regenerate the local index file."""
+    """Regenerate the local index file by crawling the Myrient directory."""
+
+    def crawl() -> list[str]:
+        """Recursively collect all file paths from the open directory."""
+        results: list[str] = []
+        stack = [""]
+        session = requests.Session()
+
+        while stack:
+            rel = stack.pop()
+            url = urllib.parse.urljoin(f"{BASE_URL}/", rel)
+            resp = session.get(url)
+            resp.raise_for_status()
+            soup = BeautifulSoup(resp.text, "html.parser")
+
+            for a in soup.select("table#list a"):
+                href = a.get("href")
+                if not href or href == "../":
+                    continue
+                decoded = urllib.parse.unquote(href)
+                if href.endswith("/"):
+                    stack.append(rel + decoded)
+                else:
+                    results.append(rel + decoded)
+
+        return results
+
     global _index_cache
     os.makedirs(os.path.dirname(INDEX_PATH), exist_ok=True)
-    cmd = [
-        "rclone",
-        "lsf",
-        "-R",
-        "--http-url",
-        f"{BASE_URL}/",
-        ":http:",
-    ]
-    print("[myrient] Updating local index via rclone. This may take a while...")
+    print("[myrient] Updating local index via HTTP crawl. This may take a while...")
+    entries = crawl()
     with open(INDEX_PATH, "w", encoding="utf-8") as f:
-        subprocess.check_call(cmd, stdout=f)
+        for line in entries:
+            f.write(line + "\n")
     _index_cache = None
 
 MYRIENT_PLATFORM_MAP = {
