@@ -52,6 +52,13 @@ PLATFORM_SYNONYMS = {
     "sony playstation vita": "Sony Playstation Vita",
     "playstation vita": "Sony Playstation Vita",
     "psvita": "Sony Playstation Vita",
+    # Common Nintendo aliases
+    "nintendo gamecube": "Nintendo GameCube",
+    "gamecube": "Nintendo GameCube",
+    "game cube": "Nintendo GameCube",
+    "nintendo 64": "Nintendo 64",  # allow lowercase normalization
+    "n64": "Nintendo 64",
+    "nintendo n64": "Nintendo 64",
 }
 
 _PLATFORM_SYNONYMS_LOWER = {k.lower(): v for k, v in PLATFORM_SYNONYMS.items()}

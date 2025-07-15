@@ -44,3 +44,4 @@ Large files can be downloaded with any of the managers recommended on Myrient's 
 - JDownloader or Motrix
 - aria2 or wget
 - Searches restrict matches to the exact console directory to avoid cross-platform results
+- Common aliases like "PS2" or "N64" are recognized automatically
