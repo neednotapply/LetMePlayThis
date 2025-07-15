@@ -285,7 +285,7 @@ async def play_command(interaction: Interaction, title: str):
             for source, url, disc in dl_links:
                 if source == "Myrient":
                     disc_label = f" (Disc {disc})" if disc is not None else ""
-                    line_title = f"{title_text}{disc_label} on myrient.erista.me"
+                    line_title = f"Direct Download {title_text}{disc_label} from myrient.erista.me"
                     line = f"[{line_title}]({url})"
                 elif source == "RomsPure":
                     line = f"[{title_text} at romspure.cc]({url})"
