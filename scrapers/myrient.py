@@ -4,6 +4,7 @@ import urllib.parse
 import json
 
 import requests
+import re
 from bs4 import BeautifulSoup
 # Attempt to use rapidfuzz for fast fuzzy matching but fall back to difflib
 from scrapers.fuzz_fallback import fuzz
@@ -92,12 +93,14 @@ MYRIENT_PLATFORM_MAP = {
     "Nintendo Game Boy Color": "No-Intro/Nintendo - Game Boy Color",
     "Nintendo Game Boy Advance": "No-Intro/Nintendo - Game Boy Advance",
     "Nintendo DS": "No-Intro/Nintendo - Nintendo DS (Decrypted)",
-    "Nintendo 64": "No-Intro/Nintendo - Nintendo 64",
+    # Only the BigEndian set is hosted on Myrient
+    "Nintendo 64": "No-Intro/Nintendo - Nintendo 64 (BigEndian)",
     "Nintendo Entertainment System": "No-Intro/Nintendo - Nintendo Entertainment System (Headered)",
     "Super Nintendo (SNES)": "No-Intro/Nintendo - Super Nintendo Entertainment System",
     "Super Nintendo Entertainment System": "No-Intro/Nintendo - Super Nintendo Entertainment System",
     "Nintendo 3DS": "No-Intro/Nintendo - Nintendo 3DS (Decrypted)",
-    "Nintendo GameCube": "Redump/Nintendo - GameCube",
+    # GameCube titles are provided in the NKit RVZ set
+    "Nintendo GameCube": "Redump/Nintendo - GameCube - NKit RVZ [zstd-19-128k]",
     "Nintendo Wii": "Redump/Nintendo - Wii",
     "Nintendo Wii U": "Redump/Nintendo - Wii U",
     "Sony PlayStation": "Redump/Sony - PlayStation",
@@ -209,8 +212,21 @@ def _load_index() -> list[str]:
             _index_cache = [line.strip() for line in f if line.strip()]
     return _index_cache
 
+DISC_RE = re.compile(r"(?:disc|disk|cd)\s*(\d+)(?:\s*of\s*\d+)?", re.I)
+
+
+def _extract_disc_info(name: str) -> tuple[str, int | None]:
+    """Return the base name and disc number if present."""
+    match = DISC_RE.search(name)
+    if not match:
+        return name, None
+    disc = int(match.group(1))
+    base = DISC_RE.sub("", name).strip()
+    return base, disc
+
+
 async def search_myrient(game_title: str, platform_name: str) -> list[str]:
-    """Search the local Myrient index for a matching file."""
+    """Search the local Myrient index for matching files."""
     subpath = get_myrient_subpath_exact(platform_name)
     if subpath is None:
         print(f"[myrient] No subpath mapping for '{platform_name}'")
@@ -237,8 +253,25 @@ async def search_myrient(game_title: str, platform_name: str) -> list[str]:
         return []
 
     best_region, best_score, best_url, best_name = min(candidates, key=lambda t: (t[0], -t[1]))
-    print(f"[myrient] Best match: '{best_name}' (score={best_score}, region_rank={best_region}) => {best_url}")
-    return [best_url]
+    best_base, best_disc = _extract_disc_info(best_name)
+    print(
+        f"[myrient] Best match: '{best_name}' (score={best_score}, region_rank={best_region}) => {best_url}"
+    )
+    if best_disc is None:
+        return [best_url]
+
+    # Collect the best candidate for each disc that shares the same base name
+    discs: dict[int, tuple[int, int, str, str]] = {}
+    for region, score, url, fname in candidates:
+        base, disc = _extract_disc_info(fname)
+        if disc is None or base.lower() != best_base.lower():
+            continue
+        prev = discs.get(disc)
+        if prev is None or (region, -score) < (prev[0], -prev[1]):
+            discs[disc] = (region, score, url, fname)
+
+    urls = [discs[d][2] for d in sorted(discs)]
+    return urls
 
 async def get_myrient_download_links(game_title: str, platform_name: str) -> list[str]:
     return await search_myrient(game_title, platform_name)

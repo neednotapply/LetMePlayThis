@@ -45,3 +45,5 @@ Large files can be downloaded with any of the managers recommended on Myrient's 
 - aria2 or wget
 - Searches restrict matches to the exact console directory to avoid cross-platform results
 - Common aliases like "PS2" or "N64" are recognized automatically
+- N64 titles are stored in the "BigEndian" set and GameCube uses the NKit RVZ collection
+- If a game spans multiple discs, download links for each disc are returned
