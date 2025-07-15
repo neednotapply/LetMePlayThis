@@ -179,6 +179,18 @@ MYRIENT_PLATFORM_MAP = {
 
 THRESHOLD = 70
 
+# Preferred regions in order of priority
+REGION_PRIORITY = ["USA", "Europe", "Japan"]
+
+
+def _region_rank(filename: str) -> int:
+    """Return a rank based on preferred region inside the filename."""
+    upper = filename.upper()
+    for idx, region in enumerate(REGION_PRIORITY):
+        if region.upper() in upper:
+            return idx
+    return len(REGION_PRIORITY)
+
 def get_myrient_subpath_exact(platform_name: str) -> str | None:
     canonical = canonicalize_platform_name(platform_name)
     return MYRIENT_PLATFORM_MAP.get(canonical)
@@ -217,13 +229,14 @@ async def search_myrient(game_title: str, platform_name: str) -> list[str]:
         if score >= THRESHOLD:
             encoded_path = urllib.parse.quote(entry, safe="/")
             url = f"{BASE_URL}/{encoded_path}"
-            candidates.append((score, url, fname))
+            region = _region_rank(fname)
+            candidates.append((region, score, url, fname))
 
     if not candidates:
         return []
 
-    best_score, best_url, best_name = max(candidates, key=lambda t: t[0])
-    print(f"[myrient] Best match: '{best_name}' (score={best_score}) => {best_url}")
+    best_region, best_score, best_url, best_name = min(candidates, key=lambda t: (t[0], -t[1]))
+    print(f"[myrient] Best match: '{best_name}' (score={best_score}, region_rank={best_region}) => {best_url}")
     return [best_url]
 
 async def get_myrient_download_links(game_title: str, platform_name: str) -> list[str]:
