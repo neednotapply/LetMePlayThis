@@ -213,7 +213,7 @@ async def search_myrient(game_title: str, platform_name: str) -> list[str]:
         fname = os.path.basename(entry)
         score = fuzz.WRatio(fname.lower(), game_title.lower())
         if score >= THRESHOLD:
-            encoded_path = urllib.parse.quote(entry, safe="/ ")
+            encoded_path = urllib.parse.quote(entry, safe="/")
             url = f"{BASE_URL}/{encoded_path}"
             candidates.append((score, url, fname))
 
