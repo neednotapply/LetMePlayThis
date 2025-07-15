@@ -276,9 +276,14 @@ async def play_command(interaction: Interaction, title: str):
         # 4) Aggregator: Get download links from GOG and/or RomsPure
         dl_links = await get_all_download_links(title_text, platform_str)
         if dl_links:
-            link_text = "\n".join(
-                f"[{title_text} at {source}]({url})" for source, url in dl_links
-            )
+            link_lines = []
+            for source, url in dl_links:
+                if source == "Myrient":
+                    line = f"[Direct Download from myrient.erista.me]({url})"
+                else:
+                    line = f"[{title_text} at {source}]({url})"
+                link_lines.append(line)
+            link_text = "\n".join(link_lines)
             embed.add_field(name="Download Links", value=link_text, inline=False)
         else:
             embed.add_field(name="Download Links", value="No links found", inline=False)

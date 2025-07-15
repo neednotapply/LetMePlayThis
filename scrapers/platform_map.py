@@ -31,9 +31,40 @@ ROMSPURE_PLATFORM_MAP = {
     "Microsoft Xbox 360": "microsoft-xbox-360",
 }
 
+# -------------------------------------------------------------------------
+# Platform name canonicalization
+# -------------------------------------------------------------------------
+# Map of lowercase aliases to their canonical TheGamesDB platform names
+PLATFORM_SYNONYMS = {
+    "sony playstation": "Sony PlayStation",
+    "playstation": "Sony PlayStation",
+    "ps1": "Sony PlayStation",
+    "psx": "Sony PlayStation",
+    "sony playstation 2": "Sony PlayStation 2",
+    "playstation 2": "Sony PlayStation 2",
+    "ps2": "Sony PlayStation 2",
+    "sony playstation 3": "Sony Playstation 3",
+    "playstation 3": "Sony Playstation 3",
+    "ps3": "Sony Playstation 3",
+    "sony playstation 4": "Sony Playstation 4",
+    "playstation 4": "Sony Playstation 4",
+    "ps4": "Sony Playstation 4",
+    "sony playstation vita": "Sony Playstation Vita",
+    "playstation vita": "Sony Playstation Vita",
+    "psvita": "Sony Playstation Vita",
+}
+
+_PLATFORM_SYNONYMS_LOWER = {k.lower(): v for k, v in PLATFORM_SYNONYMS.items()}
+
+def canonicalize_platform_name(name: str) -> str:
+    """Return the canonical platform name for lookups."""
+    return _PLATFORM_SYNONYMS_LOWER.get(name.lower(), name)
+
 def get_romspure_subpath_exact(platform_name: str) -> str | None:
     """
     Returns the romspure subpath for the given TheGamesDB platform name.
+    Handles common aliases via canonicalize_platform_name().
     If there is no exact match, returns None.
     """
-    return ROMSPURE_PLATFORM_MAP.get(platform_name)
+    canonical = canonicalize_platform_name(platform_name)
+    return ROMSPURE_PLATFORM_MAP.get(canonical)
