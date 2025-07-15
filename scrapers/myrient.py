@@ -221,8 +221,9 @@ async def search_myrient(game_title: str, platform_name: str) -> list[str]:
         return []
 
     candidates = []
+    prefix = subpath.rstrip("/") + "/"
     for entry in index:
-        if not entry.startswith(subpath):
+        if not entry.startswith(prefix):
             continue
         fname = os.path.basename(entry)
         score = fuzz.WRatio(fname.lower(), game_title.lower())
