@@ -1,6 +1,7 @@
 # scrapers/myrient.py
 import os
 import urllib.parse
+import json
 
 import requests
 from bs4 import BeautifulSoup
@@ -11,19 +12,19 @@ BASE_URL = "https://myrient.erista.me/files"
 
 # Local index file generated via scripts/update_myrient_index.py
 INDEX_PATH = os.path.join(os.path.dirname(os.path.dirname(__file__)), "data", "myrient_index.txt")
+# File storing crawl progress so that indexing can be resumed
+PROGRESS_PATH = os.path.join(os.path.dirname(INDEX_PATH), "myrient_progress.json")
 
 _index_cache: list[str] | None = None
 
 
-def update_index() -> None:
-    """Regenerate the local index file by crawling the Myrient directory."""
+def update_index(resume: bool = False) -> None:
+    """Regenerate or resume the local index file by crawling the Myrient directory."""
 
-    def crawl(out_file) -> list[str]:
+    def crawl(out_file, stack: list[str], count: int) -> list[str]:
         """Recursively collect all file paths from the open directory."""
         results: list[str] = []
-        stack = [""]
         session = requests.Session()
-        count = 0
 
         while stack:
             rel = stack.pop()
@@ -31,6 +32,9 @@ def update_index() -> None:
             url = urllib.parse.urljoin(f"{BASE_URL}/", encoded_rel)
             print(f"[myrient] Fetching {url}")
             resp = session.get(url)
+            if resp.status_code == 404:
+                print(f"[myrient] 404 Not Found: {url} -- skipping")
+                continue
             resp.raise_for_status()
             soup = BeautifulSoup(resp.text, "html.parser")
 
@@ -49,17 +53,38 @@ def update_index() -> None:
                     if count % 100 == 0:
                         out_file.flush()
                         print(f"[myrient] {count} files indexed so far...")
+            # Save crawl progress so we can resume if needed
+            with open(PROGRESS_PATH, "w", encoding="utf-8") as pf:
+                json.dump(stack, pf)
 
         out_file.flush()
         return results
 
     global _index_cache
     os.makedirs(os.path.dirname(INDEX_PATH), exist_ok=True)
-    print("[myrient] Updating local index via HTTP crawl. This may take a while...")
-    with open(INDEX_PATH, "w", encoding="utf-8") as f:
-        entries = crawl(f)
+
+    stack: list[str]
+    count = 0
+    mode = "w"
+    if resume and os.path.isfile(PROGRESS_PATH) and os.path.isfile(INDEX_PATH):
+        with open(PROGRESS_PATH, "r", encoding="utf-8") as pf:
+            stack = json.load(pf)
+        count = sum(1 for _ in open(INDEX_PATH, "r", encoding="utf-8"))
+        mode = "a"
+        print(f"[myrient] Resuming crawl with {len(stack)} paths left...")
+    else:
+        stack = [""]
+        print("[myrient] Starting new crawl. This may take a while...")
+
+    with open(INDEX_PATH, mode, encoding="utf-8") as f:
+        entries = crawl(f, stack, count)
+
+    if os.path.isfile(PROGRESS_PATH):
+        os.remove(PROGRESS_PATH)
+
     _index_cache = None
-    print(f"[myrient] Index updated with {len(entries)} entries.")
+    total = count + len(entries)
+    print(f"[myrient] Index updated with {total} entries.")
 
 MYRIENT_PLATFORM_MAP = {
     "Nintendo Game Boy": "No-Intro/Nintendo - Game Boy",
