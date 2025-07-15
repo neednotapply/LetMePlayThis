@@ -177,23 +177,28 @@ async def fetch_images(game_id: int) -> str:
 # Aggregator for download links (GOG + Romspure)
 # Returns a list of tuples: (source, URL)
 # -------------------------------------------------------------------------
-async def get_all_download_links(game_title: str, platform_name: str) -> list[tuple[str, str]]:
-    links = []
+async def get_all_download_links(game_title: str, platform_name: str) -> list[tuple[str, str, int | None]]:
+    """Aggregate download links from various sources.
+
+    Each returned tuple contains ``(source, url, disc_number)`` where
+    ``disc_number`` will be ``None`` for single-disc games.
+    """
+    links: list[tuple[str, str, int | None]] = []
 
     # For PC games (including DOS), only query GOG-Games.
     if platform_name.lower() in {"pc", "dos"}:
         gog_links = await get_gog_download_links(game_title)
         for url in gog_links:
-            links.append(("GOG-Games", url))
+            links.append(("GOG-Games", url, None))
     else:
         # For non-PC platforms query both Romspure and Myrient.
         roms_links = await get_romspure_download_links(game_title, platform_name)
         for url in roms_links:
-            links.append(("RomsPure", url))
+            links.append(("RomsPure", url, None))
 
         myrient_links = await get_myrient_download_links(game_title, platform_name)
-        for url in myrient_links:
-            links.append(("Myrient", url))
+        for url, disc in myrient_links:
+            links.append(("Myrient", url, disc))
 
     return links
 
@@ -277,9 +282,13 @@ async def play_command(interaction: Interaction, title: str):
         dl_links = await get_all_download_links(title_text, platform_str)
         if dl_links:
             link_lines = []
-            for source, url in dl_links:
+            for source, url, disc in dl_links:
                 if source == "Myrient":
-                    line = f"[Direct Download from myrient.erista.me]({url})"
+                    disc_label = f" (Disc {disc})" if disc is not None else ""
+                    line_title = f"{title_text}{disc_label} on myrient.erista.me"
+                    line = f"[{line_title}]({url})"
+                elif source == "RomsPure":
+                    line = f"[{title_text} at romspure.cc]({url})"
                 else:
                     line = f"[{title_text} at {source}]({url})"
                 link_lines.append(line)
