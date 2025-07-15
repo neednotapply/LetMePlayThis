@@ -248,8 +248,14 @@ async def search_myrient(game_title: str, platform_name: str) -> list[tuple[str,
             continue
         fname = os.path.basename(entry)
         lower_fname = fname.lower()
-        if "(rev" in lower_fname or "lodgenet" in lower_fname:
-            # Skip later revisions and LodgeNet kiosk versions
+        if (
+            "(rev" in lower_fname
+            or "lodgenet" in lower_fname
+            or "demo" in lower_fname
+            or "prototype" in lower_fname
+            or "beta" in lower_fname
+        ):
+            # Skip later revisions, LodgeNet kiosk versions, demos, and prototypes
             continue
         score = fuzz.WRatio(lower_fname, game_title.lower())
         if score >= THRESHOLD:
@@ -261,7 +267,9 @@ async def search_myrient(game_title: str, platform_name: str) -> list[tuple[str,
     if not candidates:
         return []
 
-    best_region, best_score, best_url, best_name = min(candidates, key=lambda t: (t[0], -t[1]))
+    best_region, best_score, best_url, best_name = max(
+        candidates, key=lambda t: (t[1], -t[0])
+    )
     best_base, best_disc = _extract_disc_info(best_name)
     print(
         f"[myrient] Best match: '{best_name}' (score={best_score}, region_rank={best_region}) => {best_url}"
@@ -276,7 +284,7 @@ async def search_myrient(game_title: str, platform_name: str) -> list[tuple[str,
         if disc is None or base.lower() != best_base.lower():
             continue
         prev = discs.get(disc)
-        if prev is None or (region, -score) < (prev[0], -prev[1]):
+        if prev is None or (score, -region) > (prev[1], -prev[0]):
             discs[disc] = (region, score, url, fname)
 
     results = [(discs[d][2], d) for d in sorted(discs)]
