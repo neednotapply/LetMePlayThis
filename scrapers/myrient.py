@@ -225,8 +225,13 @@ def _extract_disc_info(name: str) -> tuple[str, int | None]:
     return base, disc
 
 
-async def search_myrient(game_title: str, platform_name: str) -> list[str]:
-    """Search the local Myrient index for matching files."""
+async def search_myrient(game_title: str, platform_name: str) -> list[tuple[str, int | None]]:
+    """Search the local Myrient index for matching files.
+
+    Returns a list of tuples ``(url, disc_number)``. ``disc_number`` will be
+    ``None`` for single disc games or when no disc information could be
+    determined.
+    """
     subpath = get_myrient_subpath_exact(platform_name)
     if subpath is None:
         print(f"[myrient] No subpath mapping for '{platform_name}'")
@@ -242,7 +247,11 @@ async def search_myrient(game_title: str, platform_name: str) -> list[str]:
         if not entry.startswith(prefix):
             continue
         fname = os.path.basename(entry)
-        score = fuzz.WRatio(fname.lower(), game_title.lower())
+        lower_fname = fname.lower()
+        if "(rev" in lower_fname or "lodgenet" in lower_fname:
+            # Skip later revisions and LodgeNet kiosk versions
+            continue
+        score = fuzz.WRatio(lower_fname, game_title.lower())
         if score >= THRESHOLD:
             encoded_path = urllib.parse.quote(entry, safe="/")
             url = f"{BASE_URL}/{encoded_path}"
@@ -258,7 +267,7 @@ async def search_myrient(game_title: str, platform_name: str) -> list[str]:
         f"[myrient] Best match: '{best_name}' (score={best_score}, region_rank={best_region}) => {best_url}"
     )
     if best_disc is None:
-        return [best_url]
+        return [(best_url, None)]
 
     # Collect the best candidate for each disc that shares the same base name
     discs: dict[int, tuple[int, int, str, str]] = {}
@@ -270,8 +279,9 @@ async def search_myrient(game_title: str, platform_name: str) -> list[str]:
         if prev is None or (region, -score) < (prev[0], -prev[1]):
             discs[disc] = (region, score, url, fname)
 
-    urls = [discs[d][2] for d in sorted(discs)]
-    return urls
+    results = [(discs[d][2], d) for d in sorted(discs)]
+    return results
 
-async def get_myrient_download_links(game_title: str, platform_name: str) -> list[str]:
+async def get_myrient_download_links(game_title: str, platform_name: str) -> list[tuple[str, int | None]]:
+    """Convenience wrapper around :func:`search_myrient`."""
     return await search_myrient(game_title, platform_name)
