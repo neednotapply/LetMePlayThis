@@ -7,6 +7,7 @@ import requests
 from bs4 import BeautifulSoup
 # Attempt to use rapidfuzz for fast fuzzy matching but fall back to difflib
 from scrapers.fuzz_fallback import fuzz
+from scrapers.platform_map import canonicalize_platform_name
 
 BASE_URL = "https://myrient.erista.me/files"
 
@@ -179,7 +180,8 @@ MYRIENT_PLATFORM_MAP = {
 THRESHOLD = 70
 
 def get_myrient_subpath_exact(platform_name: str) -> str | None:
-    return MYRIENT_PLATFORM_MAP.get(platform_name)
+    canonical = canonicalize_platform_name(platform_name)
+    return MYRIENT_PLATFORM_MAP.get(canonical)
 
 
 def _load_index() -> list[str]:
