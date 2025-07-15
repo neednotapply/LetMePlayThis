@@ -27,7 +27,8 @@ def update_index() -> None:
 
         while stack:
             rel = stack.pop()
-            url = urllib.parse.urljoin(f"{BASE_URL}/", rel)
+            encoded_rel = urllib.parse.quote(rel, safe="/")
+            url = urllib.parse.urljoin(f"{BASE_URL}/", encoded_rel)
             print(f"[myrient] Fetching {url}")
             resp = session.get(url)
             resp.raise_for_status()
