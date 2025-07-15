@@ -50,8 +50,13 @@ async def search_romspure(game_title: str, platform_name: str) -> list[str]:
             continue
 
         detail_url = a_tag.get("href")
-        # Ensure the final link actually has our subpath -> skip if it's the wrong subpath
-        if subpath not in detail_url:
+        # Ensure the final link has the exact subpath
+        if detail_url:
+            path = urllib.parse.urlparse(detail_url).path
+            expect = f"/roms/{subpath}/"
+            if not path.startswith(expect):
+                continue
+        else:
             continue
 
         # The displayed name is typically in <h3 class="h6 font-weight-semibold">
