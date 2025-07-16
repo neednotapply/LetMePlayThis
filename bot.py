@@ -10,6 +10,7 @@ from bs4 import BeautifulSoup
 from scrapers.gog_games import get_gog_download_links
 from scrapers.romspure import get_romspure_download_links
 from scrapers.myrient import get_myrient_download_links
+from scrapers.emulatorjs import get_emulatorjs_play_url, set_base_url as set_emulatorjs_base_url
 
 script_dir = os.path.dirname(os.path.abspath(__file__))
 config_path = os.path.join(script_dir, "config.json")
@@ -23,6 +24,8 @@ GUILD = discord.Object(id=GUILD_ID)
 
 THEGAMESDB_API_KEY = config["theGamesDbApiKey"]
 PREFIX = config["prefix"]
+EMULATORJS_BASE_URL = config.get("emulatorJsBaseUrl", "").strip() or None
+set_emulatorjs_base_url(EMULATORJS_BASE_URL)
 
 intents = discord.Intents.default()
 intents.message_content = True
@@ -200,6 +203,10 @@ async def get_all_download_links(game_title: str, platform_name: str) -> list[tu
         for url, disc in myrient_links:
             links.append(("Myrient", url, disc))
 
+        play_url = get_emulatorjs_play_url(game_title, platform_name)
+        if play_url:
+            links.append(("PlayNow", play_url, None))
+
     return links
 
 @bot.event
@@ -278,24 +285,45 @@ async def play_command(interaction: Interaction, title: str):
         else:
             embed.set_footer(text="No image found for this game.")
 
-        # 4) Aggregator: Get download links from GOG and/or RomsPure
+        # 4) Aggregator: Get download links from various sources
         dl_links = await get_all_download_links(title_text, platform_str)
-        if dl_links:
-            link_lines = []
-            for source, url, disc in dl_links:
-                if source == "Myrient":
-                    disc_label = f" (Disc {disc})" if disc is not None else ""
-                    line_title = f"Direct Download {title_text}{disc_label} from myrient.erista.me"
-                    line = f"[{line_title}]({url})"
-                elif source == "RomsPure":
-                    line = f"[{title_text} at romspure.cc]({url})"
-                else:
-                    line = f"[{title_text} at {source}]({url})"
-                link_lines.append(line)
-            link_text = "\n".join(link_lines)
-            embed.add_field(name="Download Links", value=link_text, inline=False)
-        else:
-            embed.add_field(name="Download Links", value="No links found", inline=False)
+
+        site_lines: list[str] = []
+        direct_lines: list[str] = []
+        play_now_lines: list[str] = []
+
+        for source, url, disc in dl_links:
+            if source == "Myrient":
+                disc_label = f" (Disc {disc})" if disc is not None else ""
+                title_str = f"Direct Download {title_text}{disc_label} from myrient.erista.me"
+                direct_lines.append(f"[{title_str}]({url})")
+            elif source == "PlayNow":
+                play_now_lines.append(f"[Play {title_text} now]({url})")
+            elif source == "RomsPure":
+                site_lines.append(f"[{title_text} at romspure.cc]({url})")
+            else:
+                site_lines.append(f"[{title_text} at {source}]({url})")
+
+        if site_lines:
+            embed.add_field(
+                name="Download Sites",
+                value="\n".join(site_lines),
+                inline=False,
+            )
+
+        if direct_lines:
+            embed.add_field(
+                name="Direct Downloads",
+                value="\n".join(direct_lines),
+                inline=False,
+            )
+
+        if play_now_lines:
+            embed.add_field(
+                name="Play Now",
+                value="\n".join(play_now_lines),
+                inline=False,
+            )
 
         await select_interaction.edit_original_response(embed=embed, view=None)
 
