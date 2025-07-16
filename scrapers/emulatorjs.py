@@ -9,6 +9,7 @@ from typing import Dict, List
 from urllib.parse import urlparse
 
 from scrapers.fuzz_fallback import fuzz
+import re
 from scrapers.platform_map import canonicalize_platform_name
 
 # Environment variable for the base URL used to build play links
@@ -57,6 +58,14 @@ EMULATORJS_PLATFORM_MAP: Dict[str, str] = {
 
 _index_cache: Dict[str, List[str]] | None = None
 
+# Regular expression to strip region/revision info like "(USA)" or "(Rev 1)"
+_PAREN_RE = re.compile(r"\s*\([^)]*\)")
+
+
+def _normalize_title(title: str) -> str:
+    """Return a lowercase title with parenthetical info removed."""
+    return _PAREN_RE.sub("", title).strip().lower()
+
 
 def _load_index() -> Dict[str, List[str]]:
     """Load the index from ``INDEX_PATH`` once and cache it."""
@@ -92,9 +101,15 @@ async def search_emulatorjs(game_title: str, platform_name: str) -> str | None:
     if not index:
         return None
 
+    target_norm = _normalize_title(game_title)
+
     best_idx: int | None = None
     best_score = -1
+
     for idx, title in enumerate(index):
+        if _normalize_title(title) == target_norm:
+            # Exact normalized match - prefer immediately
+            return f"{BASE_URL}{code}---{idx + 1}"
         score = fuzz.WRatio(title.lower(), game_title.lower())
         if score > best_score:
             best_idx = idx

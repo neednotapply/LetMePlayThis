@@ -214,6 +214,17 @@ def _load_index() -> list[str]:
 
 DISC_RE = re.compile(r"(?:disc|disk|cd)\s*(\d+)(?:\s*of\s*\d+)?", re.I)
 
+# Regular expression to remove any parenthetical region or revision info
+_PAREN_RE = re.compile(r"\s*\([^)]*\)")
+
+
+def _normalize_title(title: str) -> str:
+    """Lowercase ``title`` and strip parenthetical info."""
+    title = _PAREN_RE.sub("", title)
+    title = title.replace("_", " ")
+    title = re.sub(r"\s+", " ", title)
+    return title.strip().lower()
+
 
 def _extract_disc_info(name: str) -> tuple[str, int | None]:
     """Return the base name and disc number if present."""
@@ -242,6 +253,7 @@ async def search_myrient(game_title: str, platform_name: str) -> list[tuple[str,
         return []
 
     candidates = []
+    target_norm = _normalize_title(game_title)
     prefix = subpath.rstrip("/") + "/"
     for entry in index:
         if not entry.startswith(prefix):
@@ -257,7 +269,11 @@ async def search_myrient(game_title: str, platform_name: str) -> list[tuple[str,
         ):
             # Skip later revisions, LodgeNet kiosk versions, demos, and prototypes
             continue
-        score = fuzz.WRatio(lower_fname, game_title.lower())
+        base, _ = _extract_disc_info(fname)
+        norm = _normalize_title(base)
+        score = fuzz.WRatio(norm, target_norm)
+        if norm == target_norm:
+            score = 200  # Prefer exact normalized matches
         if score >= THRESHOLD:
             encoded_path = urllib.parse.quote(entry, safe="/")
             url = f"{BASE_URL}/{encoded_path}"
