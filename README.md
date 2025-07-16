@@ -50,7 +50,6 @@ Large files can be downloaded with any of the managers recommended on Myrient's 
 - If a game spans multiple discs, download links for each disc are returned
 
 ## EmulatorJS Play-Now
-To enable the optional **Play Now** links, export your EmulatorJS frontend game lists using `scripts/update_emulatorjs_index.py`.
-The script expects the path to your container's `/emulatorjs/frontend` directory and stores the results in `data/emulatorjs_index.json`.
+To enable the optional **Play Now** links, export your EmulatorJS system config files and place them next to `scripts/update_emulatorjs_index.py` (or pass the directory as an argument). Run `scripts/update_emulatorjs_index.py` to create `data/emulatorjs_index.json`.
 Add an `emulatorJsBaseUrl` entry to `config.json` pointing at your server (for example `http://blackbox:81/#`).
 When the value is blank, Play Now links are disabled. When set and a matching title is found, the bot includes a **Play Now** link in the embed.

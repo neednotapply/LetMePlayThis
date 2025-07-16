@@ -52,6 +52,9 @@ PLATFORM_SYNONYMS = {
     "sony playstation vita": "Sony Playstation Vita",
     "playstation vita": "Sony Playstation Vita",
     "psvita": "Sony Playstation Vita",
+    # 3DO
+    "3do": "3DO Interactive Multiplayer",
+    "3do interactive multiplayer": "3DO Interactive Multiplayer",
     # Common Nintendo aliases
     "nintendo gamecube": "Nintendo GameCube",
     "gamecube": "Nintendo GameCube",
