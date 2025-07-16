@@ -36,6 +36,7 @@ EMULATORJS_PLATFORM_MAP: Dict[str, str] = {
     "Sega Mega Drive - Genesis": "segaMD",
     "Sega Mega Drive": "segaMD",
     "Sony PlayStation": "psx",
+    "3DO Interactive Multiplayer": "3do",
 }
 
 _index_cache: Dict[str, List[str]] | None = None
