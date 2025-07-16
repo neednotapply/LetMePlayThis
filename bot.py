@@ -10,7 +10,11 @@ from bs4 import BeautifulSoup
 from scrapers.gog_games import get_gog_download_links
 from scrapers.romspure import get_romspure_download_links
 from scrapers.myrient import get_myrient_download_links
-from scrapers.emulatorjs import get_emulatorjs_play_url, set_base_url as set_emulatorjs_base_url
+from scrapers.emulatorjs import (
+    get_emulatorjs_play_url,
+    set_base_url as set_emulatorjs_base_url,
+    BASE_DOMAIN as EMULATORJS_BASE_DOMAIN,
+)
 
 script_dir = os.path.dirname(os.path.abspath(__file__))
 config_path = os.path.join(script_dir, "config.json")
@@ -298,7 +302,9 @@ async def play_command(interaction: Interaction, title: str):
                 title_str = f"Direct Download {title_text}{disc_label} from myrient.erista.me"
                 direct_lines.append(f"[{title_str}]({url})")
             elif source == "PlayNow":
-                play_now_lines.append(f"[Play {title_text} now]({url})")
+                play_now_lines.append(
+                    f"[Play {title_text} at {EMULATORJS_BASE_DOMAIN}]({url})"
+                )
             elif source == "RomsPure":
                 site_lines.append(f"[{title_text} at romspure.cc]({url})")
             else:
