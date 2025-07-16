@@ -3,5 +3,6 @@
 	"guildId": "",
     "theGamesDbApiKey": "",
     "prefix": "!",
-    "ownerID": ""
+    "ownerID": "",
+    "emulatorJsBaseUrl": ""
 }
