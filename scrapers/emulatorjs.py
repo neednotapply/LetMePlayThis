@@ -109,7 +109,7 @@ async def search_emulatorjs(game_title: str, platform_name: str) -> str | None:
     for idx, title in enumerate(index):
         if _normalize_title(title) == target_norm:
             # Exact normalized match - prefer immediately
-            return f"{BASE_URL}{code}---{idx + 1}"
+            return f"{BASE_URL}{code}---{idx}"
         score = fuzz.WRatio(title.lower(), game_title.lower())
         if score > best_score:
             best_idx = idx
@@ -118,8 +118,8 @@ async def search_emulatorjs(game_title: str, platform_name: str) -> str | None:
     if best_idx is None or best_score < 70:
         return None
 
-    # EmulatorJS URLs use 1-based numbering in the fragment
-    return f"{BASE_URL}{code}---{best_idx + 1}"
+    # EmulatorJS URLs use 0-based numbering in the fragment
+    return f"{BASE_URL}{code}---{best_idx}"
 
 
 async def get_emulatorjs_play_url(game_title: str, platform_name: str) -> str | None:
