@@ -204,8 +204,11 @@ def _load_index() -> list[str]:
     global _index_cache
     if _index_cache is not None:
         return _index_cache
-    if not os.path.isfile(INDEX_PATH):
-        print(f"[myrient] index file not found at {INDEX_PATH}. Run scripts/update_myrient_index.py to create it.")
+    if not os.path.isfile(INDEX_PATH) or os.path.getsize(INDEX_PATH) == 0:
+        print(
+            f"[myrient] index file not found or empty at {INDEX_PATH}. "
+            "Run scripts/update_myrient_index.py to create it."
+        )
         _index_cache = []
     else:
         with open(INDEX_PATH, "r", encoding="utf-8") as f:

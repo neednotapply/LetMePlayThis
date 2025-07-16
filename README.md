@@ -37,7 +37,7 @@ Enjoy 👍
 
 ## Myrient Index and Download Tips
 This bot can use the open directory at [Myrient](https://myrient.erista.me/) to fetch download links. Because the site does not provide search, run `scripts/update_myrient_index.py` to build a local index of all files. The script crawls the site using Python and requires network access. The generated file is stored at `data/myrient_index.txt`.
-If a crawl is interrupted, rerunning the script will prompt you to resume from the last saved location or start over.
+If a crawl is interrupted, rerunning the script will prompt you to resume from the last saved location or start over. If the index file ends up empty (e.g., due to an interrupted crawl), delete it and run the script again so Myrient links appear correctly.
 
 Large files can be downloaded with any of the managers recommended on Myrient's wiki:
 
