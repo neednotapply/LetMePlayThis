@@ -91,8 +91,7 @@ async def search_emulatorjs(game_title: str, platform_name: str) -> str | None:
     return f"{BASE_URL}{code}---{best_idx + 1}"
 
 
-def get_emulatorjs_play_url(game_title: str, platform_name: str) -> str | None:
-    """Synchronous wrapper for :func:`search_emulatorjs`."""
-    import asyncio
+async def get_emulatorjs_play_url(game_title: str, platform_name: str) -> str | None:
+    """Asynchronous wrapper for :func:`search_emulatorjs`."""
 
-    return asyncio.run(search_emulatorjs(game_title, platform_name))
+    return await search_emulatorjs(game_title, platform_name)

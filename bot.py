@@ -203,7 +203,7 @@ async def get_all_download_links(game_title: str, platform_name: str) -> list[tu
         for url, disc in myrient_links:
             links.append(("Myrient", url, disc))
 
-        play_url = get_emulatorjs_play_url(game_title, platform_name)
+        play_url = await get_emulatorjs_play_url(game_title, platform_name)
         if play_url:
             links.append(("PlayNow", play_url, None))
 
