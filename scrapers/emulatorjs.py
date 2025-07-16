@@ -6,6 +6,7 @@ from __future__ import annotations
 import json
 import os
 from typing import Dict, List
+from urllib.parse import urlparse
 
 from scrapers.fuzz_fallback import fuzz
 from scrapers.platform_map import canonicalize_platform_name
@@ -13,12 +14,27 @@ from scrapers.platform_map import canonicalize_platform_name
 # Environment variable for the base URL used to build play links
 # Can be overridden at runtime via :func:`set_base_url`.
 BASE_URL: str | None = os.environ.get("EMULATORJS_BASE_URL")
+# Domain extracted from :data:`BASE_URL` for display purposes
+BASE_DOMAIN: str | None = None
 
 
 def set_base_url(url: str | None) -> None:
-    """Override :data:`BASE_URL` with a value from configuration."""
-    global BASE_URL
+    """Override :data:`BASE_URL` with a value from configuration.
+
+    If ``url`` is provided, ensure it ends with a ``#`` so play links are
+    constructed correctly and extract the domain for display purposes.
+    """
+    global BASE_URL, BASE_DOMAIN
+    if url:
+        if not url.endswith("#"):
+            url = url.rstrip("/") + "/#"
+        BASE_DOMAIN = urlparse(url).netloc
+    else:
+        BASE_DOMAIN = None
     BASE_URL = url
+
+# Sanitize any value from the environment at import time
+set_base_url(BASE_URL)
 
 # Path to the JSON index generated via scripts/update_emulatorjs_index.py
 INDEX_PATH = os.path.join(os.path.dirname(os.path.dirname(__file__)), "data", "emulatorjs_index.json")
